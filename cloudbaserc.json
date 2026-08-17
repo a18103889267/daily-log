@@ -1,0 +1,14 @@
+{
+  "envId": "your-env-id-placeholder",
+  "app": {
+    "name": "daily-log",
+    "framework": "vite",
+    "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "outputDir": "dist",
+    "deployPath": "/",
+    "envVariables": {
+      "VITE_CLOUDBASE_ENV_ID": "在腾讯云控制台填写环境 ID"
+    }
+  }
+}

@@ -2,9 +2,11 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
+import { useAuth } from '../composables/useAuth'
 import { useDailyLogs } from '../composables/useDailyLogs'
 
 const router = useRouter()
+const { user } = useAuth()
 const { fetchDatesInMonth } = useDailyLogs()
 
 const today = new Date()
@@ -34,9 +36,15 @@ const calendarCells = computed(() => {
 })
 
 async function loadMonth() {
+  if (!user.value?.uid) return
+
   loading.value = true
   try {
-    markedDates.value = await fetchDatesInMonth(currentYear.value, currentMonth.value)
+    markedDates.value = await fetchDatesInMonth(
+      currentYear.value,
+      currentMonth.value,
+      user.value.uid,
+    )
   } finally {
     loading.value = false
   }

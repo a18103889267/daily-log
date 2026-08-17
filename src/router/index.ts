@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { supabase } from '../lib/supabase'
+import { auth } from '../lib/cloudbase'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -27,8 +27,8 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   if (to.meta.public) return true
 
-  const { data } = await supabase.auth.getSession()
-  if (!data.session) {
+  const { data, error } = await auth.getSession()
+  if (error || !data?.session) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 

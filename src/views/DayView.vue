@@ -33,7 +33,9 @@ function removeTechnology(index: number) {
 }
 
 async function loadLog() {
-  const log = await fetchLogByDate(props.date)
+  if (!user.value?.uid) return
+
+  const log = await fetchLogByDate(props.date, user.value.uid)
   form.checklist = log ? parseChecklist(log.items) : createDefaultChecklist()
 }
 
@@ -47,7 +49,7 @@ async function handleSave() {
     {
       items: form.checklist,
     },
-    user.value.id,
+    user.value.uid,
   )
 
   savedMessage.value = '保存成功'
@@ -86,7 +88,7 @@ onMounted(() => {
                 <input
                   v-model="form.checklist.learnedTech.technologies[index]"
                   type="text"
-                  placeholder="例如：Vue3、Supabase、TypeScript"
+                  placeholder="例如：Vue3、TypeScript、CloudBase"
                 />
                 <button type="button" class="ghost" @click="removeTechnology(index)">删除</button>
               </div>

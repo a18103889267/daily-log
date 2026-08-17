@@ -12,61 +12,27 @@ export type DailyChecklist = {
   }
 }
 
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
-
-export type Database = {
-  public: {
-    Tables: {
-      daily_logs: {
-        Row: {
-          id: string
-          user_id: string
-          log_date: string
-          mood: string | null
-          tags: string[] | null
-          items: DailyChecklist | null
-          summary: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          log_date: string
-          mood?: string | null
-          tags?: string[] | null
-          items?: DailyChecklist | null
-          summary?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          log_date?: string
-          mood?: string | null
-          tags?: string[] | null
-          items?: DailyChecklist | null
-          summary?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-    }
-    Views: Record<string, never>
-    Functions: Record<string, never>
-    Enums: Record<string, never>
-    CompositeTypes: Record<string, never>
-  }
+export type DailyLog = {
+  id: number
+  user_id: string
+  log_date: string
+  mood: string | null
+  tags: string[] | null
+  items: DailyChecklist | null
+  summary: string | null
+  created_at: number
+  updated_at: number
 }
 
-export type DailyLog = Database['public']['Tables']['daily_logs']['Row']
-export type DailyLogInsert = Omit<
-  Database['public']['Tables']['daily_logs']['Insert'],
-  'user_id'
->
-export type DailyLogUpdate = Database['public']['Tables']['daily_logs']['Update']
+export type DailyLogInsert = {
+  log_date?: string
+  mood?: string | null
+  tags?: string[] | null
+  items?: DailyChecklist | null
+  summary?: string | null
+}
+
+export type DailyLogUpdate = Partial<DailyLogInsert>
 
 export function createDefaultChecklist(): DailyChecklist {
   return {
@@ -86,27 +52,26 @@ export function createDefaultChecklist(): DailyChecklist {
 
 export function parseChecklist(raw: unknown): DailyChecklist {
   const defaults = createDefaultChecklist()
+  const parsed = parseJson<DailyChecklist>(raw)
 
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return defaults
   }
 
-  const data = raw as Partial<DailyChecklist>
-
   return {
     learnedTech: {
-      checked: Boolean(data.learnedTech?.checked),
+      checked: Boolean(parsed.learnedTech?.checked),
       technologies:
-        data.learnedTech?.technologies?.length
-          ? data.learnedTech.technologies
+        parsed.learnedTech?.technologies?.length
+          ? parsed.learnedTech.technologies
           : [''],
     },
     reading: {
-      checked: Boolean(data.reading?.checked),
-      notes: data.reading?.notes ?? '',
+      checked: Boolean(parsed.reading?.checked),
+      notes: parsed.reading?.notes ?? '',
     },
     exercise: {
-      checked: Boolean(data.exercise?.checked),
+      checked: Boolean(parsed.exercise?.checked),
     },
   }
 }
@@ -136,3 +101,31 @@ export function normalizeChecklist(checklist: DailyChecklist): DailyChecklist {
     },
   }
 }
+
+function parseJson<T>(value: unknown): T | null {
+  if (value == null) return null
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T
+    } catch {
+      return null
+    }
+  }
+  return value as T
+}
+
+function mapRow(row: Record<string, unknown>): DailyLog {
+  return {
+    id: Number(row.id),
+    user_id: String(row.user_id),
+    log_date: String(row.log_date),
+    mood: (row.mood as string | null) ?? null,
+    tags: parseJson<string[]>(row.tags),
+    items: parseChecklist(row.items),
+    summary: (row.summary as string | null) ?? null,
+    created_at: Number(row.created_at ?? Date.now()),
+    updated_at: Number(row.updated_at ?? Date.now()),
+  }
+}
+
+export { mapRow }

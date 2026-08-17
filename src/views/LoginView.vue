@@ -1,56 +1,87 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuth } from '../composables/useAuth'
+import { useAuth, type EmailOtpSession } from '../composables/useAuth'
+import { getCloudBaseErrorMessage } from '../lib/cloudbase'
 
 const router = useRouter()
 const route = useRoute()
-const { signIn, signUp } = useAuth()
+const { sendEmailCode, signInWithEmailCode } = useAuth()
 
 const email = ref('')
-const password = ref('')
-const isRegister = ref(false)
+const verificationCode = ref('')
+const otpSession = ref<EmailOtpSession | null>(null)
 const loading = ref(false)
+const sendingCode = ref(false)
+const countdown = ref(0)
 const message = ref('')
 const error = ref('')
 
-function formatAuthError(err: unknown) {
-  const raw = err instanceof Error ? err.message : '操作失败，请稍后重试'
+let countdownTimer: ReturnType<typeof setInterval> | null = null
 
-  if (raw.toLowerCase().includes('email not confirmed')) {
-    return '邮箱尚未验证。请到注册邮箱查收 Supabase 验证邮件并点击链接；个人项目也可在 Supabase 控制台关闭邮箱验证。'
+function startCountdown() {
+  countdown.value = 60
+  countdownTimer = setInterval(() => {
+    countdown.value -= 1
+    if (countdown.value <= 0 && countdownTimer) {
+      clearInterval(countdownTimer)
+      countdownTimer = null
+    }
+  }, 1000)
+}
+
+async function handleSendCode() {
+  if (!email.value.trim()) {
+    error.value = '请先填写邮箱'
+    return
   }
 
-  return raw
+  sendingCode.value = true
+  error.value = ''
+  message.value = ''
+
+  try {
+    otpSession.value = await sendEmailCode(email.value.trim())
+    message.value = '验证码已发送，请查收邮箱（含垃圾箱）'
+    startCountdown()
+  } catch (err) {
+    error.value = getCloudBaseErrorMessage(err, '发送验证码失败')
+  } finally {
+    sendingCode.value = false
+  }
 }
 
 async function handleSubmit() {
+  if (!otpSession.value) {
+    error.value = '请先获取验证码'
+    return
+  }
+
   loading.value = true
   error.value = ''
   message.value = ''
 
   try {
-    if (isRegister.value) {
-      await signUp(email.value, password.value)
-      message.value = '注册成功。若开启了邮箱验证，请先查收邮件后再登录。'
-    } else {
-      await signIn(email.value, password.value)
-      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-      await router.push(redirect)
-    }
+    await signInWithEmailCode(verificationCode.value, otpSession.value)
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+    await router.push(redirect)
   } catch (err) {
-    error.value = formatAuthError(err)
+    error.value = getCloudBaseErrorMessage(err, '登录失败，请稍后重试')
   } finally {
     loading.value = false
   }
 }
+
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer)
+})
 </script>
 
 <template>
   <div class="login-page">
     <div class="card">
-      <h1>{{ isRegister ? '注册账号' : '登录 Daily Log' }}</h1>
-      <p class="hint">使用 Supabase 账号，电脑和手机可同步同一份记录。</p>
+      <h1>登录 Daily Log</h1>
+      <p class="hint">使用邮箱验证码登录，首次登录会自动注册。电脑和手机可同步同一份记录。</p>
 
       <form @submit.prevent="handleSubmit">
         <label>
@@ -59,18 +90,37 @@ async function handleSubmit() {
         </label>
 
         <label>
-          密码
-          <input v-model="password" type="password" required minlength="6" placeholder="至少 6 位" />
+          验证码
+          <div class="code-row">
+            <input
+              v-model="verificationCode"
+              type="text"
+              required
+              maxlength="6"
+              inputmode="numeric"
+              placeholder="6 位验证码"
+            />
+            <button
+              type="button"
+              class="ghost"
+              :disabled="sendingCode || countdown > 0"
+              @click="handleSendCode"
+            >
+              {{
+                sendingCode
+                  ? '发送中...'
+                  : countdown > 0
+                    ? `${countdown}s 后重发`
+                    : '获取验证码'
+              }}
+            </button>
+          </div>
         </label>
 
         <button type="submit" :disabled="loading">
-          {{ loading ? '处理中...' : isRegister ? '注册' : '登录' }}
+          {{ loading ? '登录中...' : '登录' }}
         </button>
       </form>
-
-      <button type="button" class="switch" @click="isRegister = !isRegister">
-        {{ isRegister ? '已有账号？去登录' : '没有账号？去注册' }}
-      </button>
 
       <p v-if="message" class="message">{{ message }}</p>
       <p v-if="error" class="error">{{ error }}</p>
@@ -131,6 +181,12 @@ input {
   color: var(--text);
 }
 
+.code-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
 button[type='submit'] {
   border: none;
   border-radius: 10px;
@@ -147,13 +203,20 @@ button[type='submit']:disabled {
   cursor: not-allowed;
 }
 
-.switch {
-  margin-top: 16px;
-  border: none;
+.ghost {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
   background: transparent;
-  color: var(--primary);
-  cursor: pointer;
+  color: var(--text);
   font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ghost:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .message {
