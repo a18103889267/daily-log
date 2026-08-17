@@ -1,4 +1,4 @@
-# Daily Log
+# daily-log
 
 Vue 3 + Vite + Supabase 个人每日记录项目。支持电脑和手机浏览器访问同一份数据。
 
@@ -6,7 +6,8 @@ Vue 3 + Vite + Supabase 个人每日记录项目。支持电脑和手机浏览�
 
 - 邮箱注册 / 登录（Supabase Auth）
 - 日历首页查看哪些日期已有记录
-- 按天编辑心情、标签、总结、事项明细
+- 按天 checkbox 记录：学习新技术、阅读、运动
+- 阅读心得笔记、学习技术明细
 - 数据存储在 Supabase PostgreSQL，多端同步
 
 ## 本地启动
