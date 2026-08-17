@@ -1,0 +1,37 @@
+:root {
+  --primary: #ff6600;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+#app {
+  min-height: 100vh;
+}
