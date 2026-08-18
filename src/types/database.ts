@@ -6,9 +6,11 @@ export type DailyChecklist = {
   reading: {
     checked: boolean
     notes: string
+    minutes: number
   }
   exercise: {
     checked: boolean
+    minutes: number
   }
 }
 
@@ -43,9 +45,11 @@ export function createDefaultChecklist(): DailyChecklist {
     reading: {
       checked: false,
       notes: '',
+      minutes: 0,
     },
     exercise: {
       checked: false,
+      minutes: 0,
     },
   }
 }
@@ -69,9 +73,11 @@ export function parseChecklist(raw: unknown): DailyChecklist {
     reading: {
       checked: Boolean(parsed.reading?.checked),
       notes: parsed.reading?.notes ?? '',
+      minutes: Number(parsed.reading?.minutes ?? 0) || 0,
     },
     exercise: {
       checked: Boolean(parsed.exercise?.checked),
+      minutes: Number(parsed.exercise?.minutes ?? 0) || 0,
     },
   }
 }
@@ -95,9 +101,11 @@ export function normalizeChecklist(checklist: DailyChecklist): DailyChecklist {
     reading: {
       checked: checklist.reading.checked,
       notes: checklist.reading.notes.trim(),
+      minutes: Math.max(0, Math.round(checklist.reading.minutes || 0)),
     },
     exercise: {
       checked: checklist.exercise.checked,
+      minutes: Math.max(0, Math.round(checklist.exercise.minutes || 0)),
     },
   }
 }

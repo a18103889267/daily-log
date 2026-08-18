@@ -1,14 +1,16 @@
 {
-  "envId": "your-env-id-placeholder",
+  "version": "2.0",
+  "envId": "your-env-id",
   "app": {
-    "name": "daily-log",
+    "serviceName": "dailylogs",
     "framework": "vite",
     "installCommand": "npm install",
-    "buildCommand": "npm run build",
+    "buildCommand": "npm run build:ci",
     "outputDir": "dist",
-    "deployPath": "/",
+    "deployPath": "/dailylogs",
     "envVariables": {
-      "VITE_CLOUDBASE_ENV_ID": "在腾讯云控制台填写环境 ID"
+      "VITE_CLOUDBASE_ENV_ID": "your-env-id",
+      "VITE_CLOUDBASE_PUBLISHABLE_KEY": "your-publishable-key"
     }
   }
 }

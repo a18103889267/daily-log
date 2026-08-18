@@ -50,6 +50,23 @@ export function useDailyLogs() {
     }
   }
 
+  async function fetchLogsInRange(startDate: string, endDate: string, userId: string) {
+    const { data, error: queryError } = await rdb
+      .from('daily_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('log_date', startDate)
+      .lte('log_date', endDate)
+
+    if (queryError) {
+      throw new Error(getErrorMessage(queryError, '读取记录失败'))
+    }
+
+    return (data ?? [])
+      .map((row) => mapRow(row as Record<string, unknown>))
+      .sort((a, b) => a.log_date.localeCompare(b.log_date))
+  }
+
   async function fetchDatesInMonth(year: number, month: number, userId: string) {
     const start = `${year}-${String(month).padStart(2, '0')}-01`
     const endDay = new Date(year, month, 0).getDate()
@@ -143,6 +160,7 @@ export function useDailyLogs() {
     loading,
     error,
     fetchLogByDate,
+    fetchLogsInRange,
     fetchDatesInMonth,
     saveLog,
   }

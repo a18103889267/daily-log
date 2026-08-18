@@ -33,7 +33,15 @@ VITE_CLOUDBASE_ENV_ID=你的环境ID
 
 ## 部署
 
-腾讯云 **静态网站托管** 连接 Git 仓库，环境变量配置 `VITE_CLOUDBASE_ENV_ID`，构建命令 `npm run build`，产物目录 `dist`。
+腾讯云 **静态网站托管** 连接 Git 仓库，或使用 `tcb app deploy`（见 [cloudbase/setup.md](./cloudbase/setup.md)）。
+
+| 配置项 | 值 |
+|--------|-----|
+| 构建命令 | `npm run build:ci` |
+| 产物目录 | `dist` |
+| Node.js | 20 或 22 |
+| 部署路径 | `/dailylogs` |
+| 环境变量 | `VITE_CLOUDBASE_ENV_ID`、`VITE_CLOUDBASE_PUBLISHABLE_KEY` |
 
 ## 常用命令
 

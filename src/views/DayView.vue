@@ -104,6 +104,16 @@ onMounted(() => {
 
             <div v-if="form.checklist.reading.checked" class="check-detail">
               <label class="detail-label">
+                阅读时长（分钟，可选）
+                <input
+                  v-model.number="form.checklist.reading.minutes"
+                  type="number"
+                  min="0"
+                  step="5"
+                  placeholder="例如 30"
+                />
+              </label>
+              <label class="detail-label">
                 阅读心得笔记
                 <textarea
                   v-model="form.checklist.reading.notes"
@@ -119,6 +129,19 @@ onMounted(() => {
               <input v-model="form.checklist.exercise.checked" type="checkbox" />
               <span>今天运动了吗</span>
             </label>
+
+            <div v-if="form.checklist.exercise.checked" class="check-detail">
+              <label class="detail-label">
+                运动时长（分钟，可选）
+                <input
+                  v-model.number="form.checklist.exercise.minutes"
+                  type="number"
+                  min="0"
+                  step="5"
+                  placeholder="例如 45"
+                />
+              </label>
+            </div>
           </article>
         </section>
 
