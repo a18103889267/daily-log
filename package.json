@@ -9,8 +9,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "build:ci": "vite build",
-    "preview": "vite preview"
+    "build:ci": "vite build && node scripts/postbuild.mjs",
+    "preview": "vite preview",
+    "deploy": "npm run build:ci && npx tcb hosting deploy .\\dist /dailylogs",
+    "deploy:function": "node scripts/deploy-function.mjs",
+    "deploy:all": "npm run deploy:function && npm run deploy"
   },
   "dependencies": {
     "@cloudbase/js-sdk": "^3.8.0",
@@ -20,6 +23,7 @@
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
+    "@cloudbase/cli": "^3.7.3",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^24.13.3",
     "@vitejs/plugin-vue": "^6.0.8",

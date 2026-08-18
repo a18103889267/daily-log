@@ -1,6 +1,19 @@
 {
   "version": "2.0",
-  "envId": "your-env-id",
+  "envId": "personenv-d5g0uh8zme4492f36",
+  "functionRoot": "functions",
+  "functions": [
+    {
+      "name": "deepseek-chat",
+      "runtime": "Nodejs20.19",
+      "timeout": 60,
+      "memorySize": 256,
+      "installDependency": false,
+      "envVariables": {
+        "DEEPSEEK_MODEL": "deepseek-chat"
+      }
+    }
+  ],
   "app": {
     "serviceName": "dailylogs",
     "framework": "vite",
@@ -9,8 +22,11 @@
     "outputDir": "dist",
     "deployPath": "/dailylogs",
     "envVariables": {
-      "VITE_CLOUDBASE_ENV_ID": "your-env-id",
-      "VITE_CLOUDBASE_PUBLISHABLE_KEY": "your-publishable-key"
+      "VITE_CLOUDBASE_ENV_ID": "personenv-d5g0uh8zme4492f36",
+      "VITE_CLOUDBASE_PUBLISHABLE_KEY": "your-publishable-key",
+      "VITE_AI_BACKEND": "deepseek",
+      "VITE_DEEPSEEK_MODEL": "deepseek-chat",
+      "VITE_DEEPSEEK_FUNCTION": "deepseek-chat"
     }
   }
 }

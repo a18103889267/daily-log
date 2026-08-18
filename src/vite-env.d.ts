@@ -5,8 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_CLOUDBASE_PUBLISHABLE_KEY?: string
   readonly VITE_AI_BACKEND?: string
   readonly VITE_DEEPSEEK_MODEL?: string
-  readonly VITE_AI_PROVIDER?: string
-  readonly VITE_AI_MODEL?: string
+  readonly VITE_DEEPSEEK_FUNCTION?: string
 }
 
 interface ImportMeta {

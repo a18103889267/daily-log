@@ -105,14 +105,33 @@ VITE_CLOUDBASE_PUBLISHABLE_KEY=你的PublishableKey
 
 ### CLI 部署
 
-先把 `cloudbaserc.json` 里的 `your-env-id`、`your-publishable-key` 换成真实值，然后：
+先把 `cloudbaserc.json` 里的 `your-publishable-key` 换成真实值，然后：
 
 ```powershell
 cd F:\project\daily-log
-npm install -g @cloudbase/cli
-tcb login
-tcb app deploy -e 你的环境ID
+npm install
+npx tcb login
+npx tcb app deploy -e 你的环境ID
 ```
+
+> 若提示 `tcb 无法识别`，说明未全局安装 CLI。本项目已内置 `@cloudbase/cli`，用 **`npx tcb`** 代替 `tcb` 即可。
+
+### 两种部署方式的区别（重要）
+
+| 方式 | 命令 | 控制台哪里看 | 说明 |
+|------|------|--------------|------|
+| **静态托管直传** | `npx tcb hosting deploy .\dist /dailylogs -e 环境ID` | **静态网站托管 → 文件管理** → `dailylogs/` | 直接覆盖 COS 文件，**不会**出现在「应用部署」版本列表 |
+| **云构建应用部署** | `npx tcb app deploy -e 环境ID` | **静态网站托管 → 应用部署** | 云端构建 + 版本记录，适合 Git 联动 |
+
+你刚执行的 `hosting deploy` **已经成功**（22 个文件，时间 12:01），只是不会更新「应用部署」那个列表。
+
+**正确访问地址**（必须带子路径）：
+
+```text
+https://personenv-d5g0uh8zme4492f36-1322564973.tcloudbaseapp.com/dailylogs/
+```
+
+根路径 `https://...tcloudbaseapp.com/` 没有部署内容，会 404 或显示旧页面。
 
 ### 报错：`Path does not exist: .../dist`
 
@@ -126,27 +145,105 @@ tcb app deploy -e 你的环境ID
 | 构建成功但打开白屏 | 缺少环境变量 | 补全 `VITE_CLOUDBASE_ENV_ID` 后重新部署 |
 | 刷新页面 404 | 未配置 SPA 回退 | 索引/错误文档都设为 `index.html` |
 | 资源 404 | 子路径部署 | 已设置 `base: '/dailylogs/'`，部署路径填 `/dailylogs` |
+| `video/mp2t` / `Failed to load module script` | 线上加载了**源码** `index.html`（含 `/src/main.ts`），未部署 `dist` | 见下方「MIME 类型报错」 |
+
+### MIME 类型报错（`video/mp2t`）
+
+浏览器报错类似：
+
+```text
+Failed to load module script: Expected a JavaScript-or-Wasm module script
+but the server responded with a MIME type of "video/mp2t"
+```
+
+说明页面在请求 **`/src/main.ts`**（开发入口），而不是构建后的 `/dailylogs/assets/*.js`。`.ts` 扩展名会被当成 MPEG 流，MIME 为 `video/mp2t`。
+
+**排查步骤：**
+
+1. 在浏览器打开部署地址，按 **Ctrl+U** 查看网页源代码：
+   - ❌ 若看到 `<script type="module" src="/src/main.ts">` → 云端**没有**用上 `dist` 产物
+   - ✅ 正确应为 `<script ... src="/dailylogs/assets/index-xxxxx.js">`
+2. 打开 CloudBase **部署日志**，确认构建阶段有 `vite build` 且成功，并有 `Successfully uploaded` 到 `/dailylogs/` 路径
+3. 核对控制台构建参数（必须与下表一致）：
+
+| 配置项 | 正确值 | 常见误填 |
+|--------|--------|----------|
+| 构建命令 | `npm run build:ci` | `npm run build`（含 vue-tsc，易失败） |
+| 构建产物目录 | `dist` | `.` 或留空（会上传源码） |
+| Node.js | **20** 或 **22** | 16 / 18（Vite 8 不支持） |
+| 部署路径 | `/dailylogs` | 与 `vite.config.ts` 的 `base` 一致 |
+
+4. **访问地址**必须是子路径：`https://你的域名/dailylogs/`（不要只打开根域名）
+5. **静态托管 → 设置**：4xx 错误页面设为 `index.html`（SPA 回退；若部署在子路径且仍 404，可改为 `dailylogs/index.html`）
+6. 本项目生产环境已改用 **hash 路由**（地址形如 `/dailylogs/#/summary`），无需依赖控制台 SPA 回退配置
+7. 仍不行时，本地构建后手动上传验证：
+
+```powershell
+cd F:\project\daily-log
+npm run build:ci
+npx tcb hosting deploy .\dist /dailylogs -e 你的环境ID
+```
 
 ### 备选：本地构建后上传
 
 ```powershell
 cd F:\project\daily-log
 npm run build:ci
-tcb hosting deploy .\dist /dailylogs -e 你的环境ID
+npx tcb hosting deploy .\dist /dailylogs -e 你的环境ID
 ```
 
-## 8. 开启 AI 总结（可选）
+或一键构建并上传（需先 `npx tcb login`）：
 
-1. CloudBase 控制台 → **AI+** → 开通大模型能力
-2. 确保 `.env.local` 已配置 `VITE_CLOUDBASE_PUBLISHABLE_KEY`
-3. 可选配置：
-   - `VITE_AI_PROVIDER=cloudbase`（默认）
-   - `VITE_AI_MODEL=deepseek-v4-flash`（默认，可在控制台查看可用模型）
-4. 应用内进入 **总结** 页，点击「生成本月总结」
+```powershell
+npm run deploy -- -e 你的环境ID
+```
 
-> 总结会读取日历记录（学习/阅读/运动/笔记）与目标完成情况。  
-> 在日历里填写「阅读时长 / 运动时长」后，总结可统计小时数。  
-> 若 AI 不可用，会自动降级为本地统计摘要。
+## 8. 开启 AI 总结（DeepSeek 云函数，无需 CloudBase AI+ 套餐）
+
+### 本地开发
+
+`.env.local` 配置 DeepSeek，通过 Vite 代理调用（密钥不会打包进前端）：
+
+```env
+VITE_AI_BACKEND=deepseek
+DEEPSEEK_API_KEY=你的DeepSeek密钥
+```
+
+### 线上部署（云函数代理）
+
+静态托管没有 `/api/deepseek` 代理，线上通过 **CloudBase 云函数 `deepseek-chat`** 调用 DeepSeek，Key 存在云函数环境变量，**只付 DeepSeek 用量，无需 CloudBase AI+ 资源点**。
+
+**1. 部署云函数（从 `.env.local` 读取 Key 并写入云端，不会提交到 Git）**
+
+```powershell
+npm run deploy:function
+```
+
+或手动在控制台配置：
+
+1. CloudBase 控制台 → **云函数** → `deepseek-chat` → **环境变量**
+2. 添加 `DEEPSEEK_API_KEY` = 你的 DeepSeek 密钥
+3. 可选 `DEEPSEEK_MODEL` = `deepseek-chat`
+
+**2. 部署前端**
+
+```powershell
+npm run deploy -- -e 你的环境ID
+```
+
+或一键：
+
+```powershell
+npm run deploy:all -- -e 你的环境ID
+```
+
+### 常见错误
+
+| 错误 | 处理 |
+|------|------|
+| `云函数未配置 DEEPSEEK_API_KEY` | 执行 `npm run deploy:function` 或在控制台添加环境变量 |
+| `云函数调用失败` | 确认已登录；云函数 → deepseek-chat 是否部署成功 |
+| DeepSeek 余额不足 | 去 DeepSeek 控制台充值 |
 
 ## 7. 验证
 
