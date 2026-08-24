@@ -1,3 +1,8 @@
+export type ReadingEntry = {
+  title: string
+  notes: string
+}
+
 export type DailyChecklist = {
   learnedTech: {
     checked: boolean
@@ -5,8 +10,8 @@ export type DailyChecklist = {
   }
   reading: {
     checked: boolean
-    notes: string
     minutes: number
+    entries: ReadingEntry[]
   }
   exercise: {
     checked: boolean
@@ -44,8 +49,8 @@ export function createDefaultChecklist(): DailyChecklist {
     },
     reading: {
       checked: false,
-      notes: '',
       minutes: 0,
+      entries: [{ title: '', notes: '' }],
     },
     exercise: {
       checked: false,
@@ -72,8 +77,8 @@ export function parseChecklist(raw: unknown): DailyChecklist {
     },
     reading: {
       checked: Boolean(parsed.reading?.checked),
-      notes: parsed.reading?.notes ?? '',
       minutes: Number(parsed.reading?.minutes ?? 0) || 0,
+      entries: parseReadingEntries(parsed.reading),
     },
     exercise: {
       checked: Boolean(parsed.exercise?.checked),
@@ -100,14 +105,35 @@ export function normalizeChecklist(checklist: DailyChecklist): DailyChecklist {
     },
     reading: {
       checked: checklist.reading.checked,
-      notes: checklist.reading.notes.trim(),
       minutes: Math.max(0, Math.round(checklist.reading.minutes || 0)),
+      entries: checklist.reading.entries
+        .map((entry) => ({
+          title: entry.title.trim(),
+          notes: entry.notes.trim(),
+        }))
+        .filter((entry) => entry.title || entry.notes),
     },
     exercise: {
       checked: checklist.exercise.checked,
       minutes: Math.max(0, Math.round(checklist.exercise.minutes || 0)),
     },
   }
+}
+
+function parseReadingEntries(reading: { entries?: ReadingEntry[]; notes?: string } | undefined): ReadingEntry[] {
+  if (reading?.entries?.length) {
+    return reading.entries.map((entry) => ({
+      title: entry.title ?? '',
+      notes: entry.notes ?? '',
+    }))
+  }
+
+  const legacyNotes = typeof reading?.notes === 'string' ? reading.notes.trim() : ''
+  if (legacyNotes) {
+    return [{ title: '', notes: legacyNotes }]
+  }
+
+  return [{ title: '', notes: '' }]
 }
 
 function parseJson<T>(value: unknown): T | null {

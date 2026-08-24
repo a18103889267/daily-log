@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.goals (
   id BIGSERIAL PRIMARY KEY,
   user_id VARCHAR(128) NOT NULL,
   title VARCHAR(512) NOT NULL,
-  period_type VARCHAR(16) NOT NULL CHECK (period_type IN ('daily', 'monthly', 'quarterly')),
+  period_type VARCHAR(16) NOT NULL CHECK (period_type IN ('daily', 'weekly', 'monthly', 'quarterly')),
   start_date VARCHAR(10) NOT NULL,
   end_date VARCHAR(10) NOT NULL,
   completed BOOLEAN NOT NULL DEFAULT FALSE,
@@ -36,7 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_goals_user_id ON public.goals (user_id);
 CREATE INDEX IF NOT EXISTS idx_goals_user_completed ON public.goals (user_id, completed);
 
 COMMENT ON TABLE public.goals IS '用户目标';
-COMMENT ON COLUMN public.goals.period_type IS 'daily / monthly / quarterly';
+COMMENT ON COLUMN public.goals.period_type IS 'daily / weekly / monthly / quarterly';
 COMMENT ON COLUMN public.goals.end_date IS '目标截止日期 YYYY-MM-DD';
 
 -- 新建或修改表后刷新 API schema 缓存

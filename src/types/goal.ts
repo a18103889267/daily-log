@@ -1,6 +1,6 @@
-import { formatLocalDate, parseLocalDate } from '../utils/date'
+import { formatLocalDate, getWeekRange, parseLocalDate } from '../utils/date'
 
-export type GoalPeriod = 'daily' | 'monthly' | 'quarterly'
+export type GoalPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly'
 
 export type Goal = {
   id: number
@@ -23,6 +23,7 @@ export type GoalInsert = {
 
 export const GOAL_PERIOD_LABELS: Record<GoalPeriod, string> = {
   daily: '每日目标',
+  weekly: '每周目标',
   monthly: '每月目标',
   quarterly: '三个月目标',
 }
@@ -34,6 +35,10 @@ export function computeGoalEndDate(startDate: string, periodType: GoalPeriod): s
 
   if (periodType === 'daily') {
     return startDate
+  }
+
+  if (periodType === 'weekly') {
+    return getWeekRange(start).end
   }
 
   if (periodType === 'monthly') {

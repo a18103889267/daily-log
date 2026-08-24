@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS public.goals (
   id BIGSERIAL PRIMARY KEY,
   user_id VARCHAR(128) NOT NULL,
   title VARCHAR(512) NOT NULL,
-  period_type VARCHAR(16) NOT NULL CHECK (period_type IN ('daily', 'monthly', 'quarterly')),
+  period_type VARCHAR(16) NOT NULL CHECK (period_type IN ('daily', 'weekly', 'monthly', 'quarterly')),
   start_date VARCHAR(10) NOT NULL,
   end_date VARCHAR(10) NOT NULL,
   completed BOOLEAN NOT NULL DEFAULT FALSE,

@@ -24,7 +24,7 @@ const form = reactive({
   start_date: todayLocal(),
 })
 
-const periodOptions: GoalPeriod[] = ['daily', 'monthly', 'quarterly']
+const periodOptions: GoalPeriod[] = ['daily', 'weekly', 'monthly', 'quarterly']
 
 const filteredGoals = computed(() => {
   const today = todayLocal()
@@ -111,7 +111,7 @@ onMounted(() => {
       <div class="toolbar">
         <div>
           <h1>我的目标</h1>
-          <p>设置每日、每月或三个月目标，完成后打勾；到期未完成会提醒。</p>
+          <p>设置每日、每周、每月或三个月目标，完成后打勾；到期未完成会提醒。</p>
         </div>
         <button type="button" class="ghost" @click="router.push({ name: 'home' })">返回日历</button>
       </div>

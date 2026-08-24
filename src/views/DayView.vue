@@ -32,6 +32,18 @@ function removeTechnology(index: number) {
   form.checklist.learnedTech.technologies.splice(index, 1)
 }
 
+function addReadingEntry() {
+  form.checklist.reading.entries.push({ title: '', notes: '' })
+}
+
+function removeReadingEntry(index: number) {
+  if (form.checklist.reading.entries.length === 1) {
+    form.checklist.reading.entries[0] = { title: '', notes: '' }
+    return
+  }
+  form.checklist.reading.entries.splice(index, 1)
+}
+
 async function loadLog() {
   if (!user.value?.uid) return
 
@@ -113,14 +125,32 @@ onMounted(() => {
                   placeholder="例如 30"
                 />
               </label>
-              <label class="detail-label">
-                阅读心得笔记
-                <textarea
-                  v-model="form.checklist.reading.notes"
-                  rows="4"
-                  placeholder="今天读了什么？有什么收获或想法？"
-                />
-              </label>
+
+              <p class="detail-label">阅读记录</p>
+              <div
+                v-for="(entry, index) in form.checklist.reading.entries"
+                :key="`reading-${index}`"
+                class="reading-entry"
+              >
+                <label class="detail-label">
+                  书名
+                  <input
+                    v-model="entry.title"
+                    type="text"
+                    placeholder="例如：《三体》"
+                  />
+                </label>
+                <label class="detail-label">
+                  心得体会
+                  <textarea
+                    v-model="entry.notes"
+                    rows="3"
+                    placeholder="今天读了什么？有什么收获或想法？"
+                  />
+                </label>
+                <button type="button" class="ghost" @click="removeReadingEntry(index)">删除</button>
+              </div>
+              <button type="button" class="ghost add-btn" @click="addReadingEntry">+ 添加阅读记录</button>
             </div>
           </article>
 
@@ -280,6 +310,15 @@ textarea {
 
 .add-btn {
   justify-self: start;
+}
+
+.reading-entry {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface);
 }
 
 .actions {
