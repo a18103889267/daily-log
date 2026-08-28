@@ -42,6 +42,14 @@ function isActive(name: string) {
       <button
         type="button"
         class="nav-link"
+        :class="{ active: isActive('learning') }"
+        @click="router.push({ name: 'learning' })"
+      >
+        学习
+      </button>
+      <button
+        type="button"
+        class="nav-link"
         :class="{ active: isActive('summary') }"
         @click="router.push({ name: 'summary' })"
       >
