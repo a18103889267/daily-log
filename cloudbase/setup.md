@@ -35,6 +35,7 @@ VITE_CLOUDBASE_PUBLISHABLE_KEY=你的PublishableKey
 4. 回到 **数据浏览器**，刷新后应能看到表 **`daily_logs`** 和 **`goals`**
 
 > 如果之前只建过 `daily_logs`，目标功能需要额外执行 **`cloudbase/migrate-goals.sql`**。  
+> 若添加目标时报 `goals_period_type_check` 约束错误，说明数据库尚未支持「每周目标」，请执行 **`cloudbase/migrate-goals-weekly.sql`**。  
 > 建表后若仍报 `Could not find the table 'public.goals'`，在同一 SQL 编辑器再执行：  
 > `NOTIFY pgrst, 'reload schema';`  
 > 然后等几秒刷新页面。

@@ -4,6 +4,7 @@ import {
   computeGoalEndDate,
   isGoalOverdue,
   mapGoalRow,
+  normalizeGoalPeriod,
   type Goal,
   type GoalInsert,
   type GoalPeriod,
@@ -15,6 +16,9 @@ function getErrorMessage(error: unknown, fallback: string) {
     const message = String((error as { message: string }).message)
     if (message.includes('public.goals') || message.includes('schema cache')) {
       return '目标表尚未创建。请在 CloudBase SQL 编辑器执行 cloudbase/migrate-goals.sql，然后刷新页面。'
+    }
+    if (message.includes('goals_period_type_check')) {
+      return '目标类型与数据库约束不一致。请在 CloudBase 控制台 → SQL 型数据库 → PostgreSQL → SQL 编辑器执行 cloudbase/migrate-goals-weekly.sql，然后刷新页面。'
     }
     return message
   }
@@ -65,8 +69,9 @@ export function useGoals() {
       throw new Error('请填写目标内容')
     }
 
+    const periodType = normalizeGoalPeriod(payload.period_type)
     const startDate = payload.start_date.trim()
-    const endDate = computeGoalEndDate(startDate, payload.period_type)
+    const endDate = computeGoalEndDate(startDate, periodType)
     const now = Date.now()
 
     try {
@@ -75,7 +80,7 @@ export function useGoals() {
         .insert({
           user_id: userId,
           title,
-          period_type: payload.period_type,
+          period_type: periodType,
           start_date: startDate,
           end_date: endDate,
           completed: false,

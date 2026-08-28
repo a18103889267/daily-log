@@ -2,6 +2,16 @@ import { formatLocalDate, getWeekRange, parseLocalDate } from '../utils/date'
 
 export type GoalPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly'
 
+export const GOAL_PERIODS: GoalPeriod[] = ['daily', 'weekly', 'monthly', 'quarterly']
+
+export function normalizeGoalPeriod(value: string): GoalPeriod {
+  const period = value.trim() as GoalPeriod
+  if (!GOAL_PERIODS.includes(period)) {
+    throw new Error('请选择有效的目标类型')
+  }
+  return period
+}
+
 export type Goal = {
   id: number
   user_id: string
