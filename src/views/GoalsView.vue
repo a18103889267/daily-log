@@ -292,7 +292,7 @@ onMounted(() => {
 .filter-btn.active {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(255, 102, 0, 0.08);
+  background: var(--primary-soft);
   font-weight: 600;
 }
 
@@ -400,7 +400,7 @@ select {
 .badge {
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(255, 102, 0, 0.1);
+  background: var(--primary-soft-md);
   color: var(--primary);
   font-size: 12px;
 }

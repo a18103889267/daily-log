@@ -35,6 +35,7 @@ const result = ref<PaginatedLearningContents>({
 
 const message = ref('')
 const categoryFormOpen = ref(false)
+const categoryManageOpen = ref(false)
 const contentFormOpen = ref(false)
 
 const filterCategoryId = ref<number | null>(null)
@@ -110,6 +111,23 @@ async function handleDeleteCategory(category: LearningCategory) {
   }
   await loadContents()
   message.value = '分类已删除'
+  if (categories.value.length === 0) {
+    categoryManageOpen.value = false
+  }
+}
+
+function toggleCategoryManage() {
+  categoryManageOpen.value = !categoryManageOpen.value
+  if (categoryManageOpen.value) {
+    categoryFormOpen.value = false
+  }
+}
+
+function toggleCategoryForm() {
+  categoryFormOpen.value = !categoryFormOpen.value
+  if (categoryFormOpen.value) {
+    categoryManageOpen.value = false
+  }
 }
 
 async function handleCreateContent() {
@@ -220,9 +238,19 @@ onMounted(() => {
       <section class="panel">
         <div class="section-head">
           <h2>学习分类</h2>
-          <button type="button" class="primary" @click="categoryFormOpen = !categoryFormOpen">
-            {{ categoryFormOpen ? '取消' : '+ 新建分类' }}
-          </button>
+          <div class="section-actions">
+            <button
+              v-if="categories.length > 0"
+              type="button"
+              class="ghost"
+              @click="toggleCategoryManage"
+            >
+              {{ categoryManageOpen ? '完成' : '管理分类' }}
+            </button>
+            <button type="button" class="primary" @click="toggleCategoryForm">
+              {{ categoryFormOpen ? '取消' : '+ 新建分类' }}
+            </button>
+          </div>
         </div>
 
         <form v-if="categoryFormOpen" class="inline-form" @submit.prevent="handleCreateCategory">
@@ -236,36 +264,48 @@ onMounted(() => {
         </form>
 
         <div v-if="categories.length === 0" class="hint">还没有分类，请先创建一个分类。</div>
-        <ul v-else class="category-list">
-          <li v-for="category in categories" :key="category.id" class="category-item">
-            <button
-              type="button"
-              class="filter-btn"
-              :class="{ active: filterCategoryId === category.id }"
-              @click="selectCategoryFilter(category.id)"
-            >
-              {{ category.name }}
-            </button>
-            <button
-              type="button"
-              class="ghost small"
-              :disabled="loading"
-              @click="handleDeleteCategory(category)"
-            >
-              删除
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              class="filter-btn"
-              :class="{ active: filterCategoryId === null }"
-              @click="selectCategoryFilter(null)"
-            >
-              全部分类
-            </button>
-          </li>
-        </ul>
+        <template v-else>
+          <p class="filter-label">筛选分类</p>
+          <ul class="category-list">
+            <li v-for="category in categories" :key="category.id">
+              <button
+                type="button"
+                class="filter-btn"
+                :class="{ active: filterCategoryId === category.id }"
+                @click="selectCategoryFilter(category.id)"
+              >
+                {{ category.name }}
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                class="filter-btn"
+                :class="{ active: filterCategoryId === null }"
+                @click="selectCategoryFilter(null)"
+              >
+                全部分类
+              </button>
+            </li>
+          </ul>
+
+          <div v-if="categoryManageOpen" class="category-manage">
+            <p class="manage-hint">删除分类后，该分类下的学习内容也会一并移除。</p>
+            <ul class="manage-list">
+              <li v-for="category in categories" :key="`manage-${category.id}`" class="manage-row">
+                <span class="manage-name">{{ category.name }}</span>
+                <button
+                  type="button"
+                  class="danger-btn"
+                  :disabled="loading"
+                  @click="handleDeleteCategory(category)"
+                >
+                  删除分类
+                </button>
+              </li>
+            </ul>
+          </div>
+        </template>
       </section>
 
       <section class="panel">
@@ -444,6 +484,12 @@ onMounted(() => {
   font-size: 18px;
 }
 
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .primary,
 .ghost,
 .filter-btn {
@@ -480,7 +526,7 @@ onMounted(() => {
 .filter-btn.active {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(255, 102, 0, 0.08);
+  background: var(--primary-soft);
   font-weight: 600;
 }
 
@@ -541,6 +587,12 @@ textarea {
   font-size: 14px;
 }
 
+.filter-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .category-list {
   list-style: none;
   margin: 0;
@@ -550,10 +602,64 @@ textarea {
   gap: 8px;
 }
 
-.category-item {
+.category-manage {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.manage-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.manage-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.manage-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.manage-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.danger-btn {
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.danger-btn:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.danger-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .content-list {
@@ -588,7 +694,7 @@ textarea {
 .badge {
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(255, 102, 0, 0.1);
+  background: var(--primary-soft-md);
   color: var(--primary);
   font-size: 12px;
   white-space: nowrap;

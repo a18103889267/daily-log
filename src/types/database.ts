@@ -1,6 +1,7 @@
 export type ReadingEntry = {
   title: string
-  notes: string
+  /** 心得体会，一条一条追加 */
+  reflections: string[]
 }
 
 export type DailyChecklist = {
@@ -50,7 +51,7 @@ export function createDefaultChecklist(): DailyChecklist {
     reading: {
       checked: false,
       minutes: 0,
-      entries: [{ title: '', notes: '' }],
+      entries: [{ title: '', reflections: [''] }],
     },
     exercise: {
       checked: false,
@@ -109,9 +110,9 @@ export function normalizeChecklist(checklist: DailyChecklist): DailyChecklist {
       entries: checklist.reading.entries
         .map((entry) => ({
           title: entry.title.trim(),
-          notes: entry.notes.trim(),
+          reflections: entry.reflections.map((item) => item.trim()).filter(Boolean),
         }))
-        .filter((entry) => entry.title || entry.notes),
+        .filter((entry) => entry.title || entry.reflections.length > 0),
     },
     exercise: {
       checked: checklist.exercise.checked,
@@ -120,20 +121,43 @@ export function normalizeChecklist(checklist: DailyChecklist): DailyChecklist {
   }
 }
 
-function parseReadingEntries(reading: { entries?: ReadingEntry[]; notes?: string } | undefined): ReadingEntry[] {
+function parseReadingEntries(
+  reading: { entries?: Array<Record<string, unknown>>; notes?: string } | undefined,
+): ReadingEntry[] {
   if (reading?.entries?.length) {
-    return reading.entries.map((entry) => ({
-      title: entry.title ?? '',
-      notes: entry.notes ?? '',
-    }))
+    return reading.entries.map((entry) => normalizeReadingEntry(entry))
   }
 
   const legacyNotes = typeof reading?.notes === 'string' ? reading.notes.trim() : ''
   if (legacyNotes) {
-    return [{ title: '', notes: legacyNotes }]
+    return [{ title: '', reflections: splitLegacyNotes(legacyNotes) }]
   }
 
-  return [{ title: '', notes: '' }]
+  return [{ title: '', reflections: [''] }]
+}
+
+function normalizeReadingEntry(entry: Record<string, unknown>): ReadingEntry {
+  const title = String(entry.title ?? '')
+
+  if (Array.isArray(entry.reflections)) {
+    const reflections = entry.reflections.map((item) => String(item ?? '').trim())
+    return { title, reflections: reflections.length ? reflections : [''] }
+  }
+
+  const legacyNotes = typeof entry.notes === 'string' ? entry.notes.trim() : ''
+  if (legacyNotes) {
+    return { title, reflections: splitLegacyNotes(legacyNotes) }
+  }
+
+  return { title, reflections: [''] }
+}
+
+function splitLegacyNotes(notes: string): string[] {
+  const lines = notes
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+  return lines.length ? lines : ['']
 }
 
 function parseJson<T>(value: unknown): T | null {

@@ -46,7 +46,7 @@ const html = computed(() => {
 .markdown-body :deep(h1) {
   font-size: 1.5rem;
   padding-bottom: 0.35em;
-  border-bottom: 2px solid rgba(255, 102, 0, 0.25);
+  border-bottom: 2px solid var(--primary-soft-border);
 }
 
 .markdown-body :deep(h2) {
@@ -95,7 +95,7 @@ const html = computed(() => {
   margin: 1em 0;
   padding: 0.75em 1em;
   border-left: 4px solid var(--primary);
-  background: rgba(255, 102, 0, 0.06);
+  background: var(--primary-soft-sm);
   border-radius: 0 10px 10px 0;
   color: var(--text-muted);
 }
@@ -160,7 +160,7 @@ const html = computed(() => {
 }
 
 .markdown-body :deep(th) {
-  background: rgba(255, 102, 0, 0.08);
+  background: var(--primary-soft);
   font-weight: 600;
 }
 </style>

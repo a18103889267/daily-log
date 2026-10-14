@@ -547,7 +547,7 @@ onUnmounted(() => {
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(circle at top, rgba(255, 102, 0, 0.12), transparent 40%),
+    radial-gradient(circle at top, var(--primary-glow), transparent 40%),
     var(--bg);
 }
 
@@ -602,7 +602,7 @@ h1 {
 .sub-tab.active {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(255, 102, 0, 0.08);
+  background: var(--primary-soft);
   font-weight: 600;
 }
 

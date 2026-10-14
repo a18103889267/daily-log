@@ -110,7 +110,7 @@ function isActive(name: string) {
 .nav-link.active {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(255, 102, 0, 0.08);
+  background: var(--primary-soft);
   font-weight: 600;
 }
 

@@ -1,5 +1,15 @@
 :root {
-  --primary: #ff6600;
+  --primary: #7c3aed;
+  --primary-strong: #6d28d9;
+  --primary-light: #a78bfa;
+  --primary-soft: rgba(124, 58, 237, 0.08);
+  --primary-soft-md: rgba(124, 58, 237, 0.1);
+  --primary-soft-sm: rgba(124, 58, 237, 0.06);
+  --primary-soft-xs: rgba(124, 58, 237, 0.05);
+  --primary-soft-border: rgba(124, 58, 237, 0.25);
+  --primary-soft-border-md: rgba(124, 58, 237, 0.35);
+  --primary-gradient: linear-gradient(135deg, #7c3aed, #9333ea);
+  --primary-glow: rgba(124, 58, 237, 0.12);
   --text: #1f2937;
   --text-muted: #6b7280;
   --bg: #f7f7f8;

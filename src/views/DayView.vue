@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
+import SuccessToast from '../components/SuccessToast.vue'
 import { useAuth } from '../composables/useAuth'
 import { useDailyLogs } from '../composables/useDailyLogs'
 import { createDefaultChecklist, parseChecklist } from '../types/database'
@@ -16,9 +17,21 @@ const form = reactive({
   checklist: createDefaultChecklist(),
 })
 
-const savedMessage = ref('')
+const toastVisible = ref(false)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const title = computed(() => props.date)
+
+function showSaveToast() {
+  toastVisible.value = true
+  if (toastTimer) {
+    clearTimeout(toastTimer)
+  }
+  toastTimer = setTimeout(() => {
+    toastVisible.value = false
+    toastTimer = null
+  }, 1000)
+}
 
 function addTechnology() {
   form.checklist.learnedTech.technologies.push('')
@@ -33,15 +46,28 @@ function removeTechnology(index: number) {
 }
 
 function addReadingEntry() {
-  form.checklist.reading.entries.push({ title: '', notes: '' })
+  form.checklist.reading.entries.push({ title: '', reflections: [''] })
 }
 
 function removeReadingEntry(index: number) {
   if (form.checklist.reading.entries.length === 1) {
-    form.checklist.reading.entries[0] = { title: '', notes: '' }
+    form.checklist.reading.entries[0] = { title: '', reflections: [''] }
     return
   }
   form.checklist.reading.entries.splice(index, 1)
+}
+
+function addReflection(entryIndex: number) {
+  form.checklist.reading.entries[entryIndex].reflections.push('')
+}
+
+function removeReflection(entryIndex: number, reflectionIndex: number) {
+  const reflections = form.checklist.reading.entries[entryIndex].reflections
+  if (reflections.length === 1) {
+    reflections[0] = ''
+    return
+  }
+  reflections.splice(reflectionIndex, 1)
 }
 
 async function loadLog() {
@@ -54,8 +80,6 @@ async function loadLog() {
 async function handleSave() {
   if (!user.value) return
 
-  savedMessage.value = ''
-
   await saveLog(
     props.date,
     {
@@ -64,11 +88,17 @@ async function handleSave() {
     user.value.uid,
   )
 
-  savedMessage.value = '保存成功'
+  showSaveToast()
 }
 
 onMounted(() => {
   void loadLog()
+})
+
+onUnmounted(() => {
+  if (toastTimer) {
+    clearTimeout(toastTimer)
+  }
 })
 </script>
 
@@ -140,15 +170,27 @@ onMounted(() => {
                     placeholder="例如：《三体》"
                   />
                 </label>
-                <label class="detail-label">
-                  心得体会
-                  <textarea
-                    v-model="entry.notes"
-                    rows="3"
-                    placeholder="今天读了什么？有什么收获或想法？"
-                  />
-                </label>
-                <button type="button" class="ghost" @click="removeReadingEntry(index)">删除</button>
+                <div class="reflection-block">
+                  <p class="detail-label">心得体会</p>
+                  <div
+                    v-for="(_, reflectionIndex) in entry.reflections"
+                    :key="`reflection-${index}-${reflectionIndex}`"
+                    class="reflection-row"
+                  >
+                    <input
+                      v-model="entry.reflections[reflectionIndex]"
+                      type="text"
+                      placeholder="记录一条心得，例如：第三章对人物关系的描写很细腻"
+                    />
+                    <button type="button" class="ghost" @click="removeReflection(index, reflectionIndex)">
+                      删除
+                    </button>
+                  </div>
+                  <button type="button" class="ghost add-btn" @click="addReflection(index)">
+                    + 追加心得
+                  </button>
+                </div>
+                <button type="button" class="ghost" @click="removeReadingEntry(index)">删除本书记录</button>
               </div>
               <button type="button" class="ghost add-btn" @click="addReadingEntry">+ 添加阅读记录</button>
             </div>
@@ -179,11 +221,12 @@ onMounted(() => {
           <button type="submit" class="primary" :disabled="loading">
             {{ loading ? '保存中...' : '保存' }}
           </button>
-          <span v-if="savedMessage" class="success">{{ savedMessage }}</span>
           <span v-if="error" class="error">{{ error }}</span>
         </div>
       </form>
     </main>
+
+    <SuccessToast :visible="toastVisible" title="保存成功" subtitle="今日记录已保存" />
   </div>
 </template>
 
@@ -321,14 +364,21 @@ textarea {
   background: var(--surface);
 }
 
+.reflection-block {
+  display: grid;
+  gap: 8px;
+}
+
+.reflection-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
 .actions {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.success {
-  color: #059669;
 }
 
 .error {
@@ -336,7 +386,8 @@ textarea {
 }
 
 @media (max-width: 768px) {
-  .detail-row {
+  .detail-row,
+  .reflection-row {
     grid-template-columns: 1fr;
   }
 }

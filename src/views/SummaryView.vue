@@ -222,7 +222,7 @@ async function handleGenerate() {
 .page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top right, rgba(255, 102, 0, 0.08), transparent 35%),
+    radial-gradient(circle at top right, var(--primary-soft), transparent 35%),
     var(--bg);
 }
 
@@ -288,7 +288,7 @@ async function handleGenerate() {
 .period-tab.active {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(255, 102, 0, 0.08);
+  background: var(--primary-soft);
   font-weight: 600;
 }
 
@@ -321,7 +321,7 @@ async function handleGenerate() {
 
 .primary {
   border: none;
-  background: linear-gradient(135deg, #ff6600, #ff8533);
+  background: var(--primary-gradient);
   color: #fff;
   font-weight: 600;
 }
@@ -368,8 +368,8 @@ async function handleGenerate() {
 }
 
 .stat-card[data-tone='orange'] {
-  border-color: rgba(255, 102, 0, 0.35);
-  background: rgba(255, 102, 0, 0.05);
+  border-color: var(--primary-soft-border-md);
+  background: var(--primary-soft-xs);
 }
 
 .stat-card[data-tone='blue'] {

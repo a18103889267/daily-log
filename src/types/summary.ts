@@ -17,7 +17,7 @@ export type SummaryStats = {
   readingMinutes: number
   exerciseMinutes: number
   technologies: string[]
-  readingNotes: Array<{ date: string; title: string; notes: string }>
+  readingNotes: Array<{ date: string; title: string; reflections: string[] }>
   completedGoals: string[]
   incompleteGoals: string[]
   overdueGoals: string[]
@@ -38,7 +38,7 @@ export function buildSummaryStats(
   today: string,
 ): SummaryStats {
   const technologies = new Set<string>()
-  const readingNotes: Array<{ date: string; title: string; notes: string }> = []
+  const readingNotes: Array<{ date: string; title: string; reflections: string[] }> = []
   let learningDays = 0
   let readingDays = 0
   let exerciseDays = 0
@@ -59,9 +59,9 @@ export function buildSummaryStats(
       readingMinutes += checklist.reading.minutes
       checklist.reading.entries.forEach((entry) => {
         const title = entry.title.trim()
-        const notes = entry.notes.trim()
-        if (title || notes) {
-          readingNotes.push({ date: log.log_date, title, notes })
+        const reflections = entry.reflections.map((item) => item.trim()).filter(Boolean)
+        if (title || reflections.length > 0) {
+          readingNotes.push({ date: log.log_date, title, reflections })
         }
       })
     }
@@ -157,7 +157,14 @@ export function buildFallbackSummary(stats: SummaryStats) {
     sections.push('', '## 阅读笔记摘录', '')
     stats.readingNotes.forEach((item) => {
       const label = item.title ? `**${item.date} · ${item.title}**` : `**${item.date}**`
-      sections.push(`- ${label}：${item.notes || '（无心得）'}`)
+      if (item.reflections.length === 0) {
+        sections.push(`- ${label}：（无心得）`)
+        return
+      }
+      sections.push(`- ${label}`)
+      item.reflections.forEach((reflection) => {
+        sections.push(`  - ${reflection}`)
+      })
     })
   }
 

@@ -329,7 +329,7 @@ onMounted(() => {
 
 .day-cell:not(.empty):hover {
   border-color: var(--primary);
-  background: rgba(255, 102, 0, 0.06);
+  background: var(--primary-soft-sm);
 }
 
 .day-cell.empty {
