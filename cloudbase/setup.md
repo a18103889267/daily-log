@@ -56,7 +56,22 @@ VITE_CLOUDBASE_PUBLISHABLE_KEY=你的PublishableKey
 | summary | TEXT | 总结 |
 | created_at / updated_at | BIGINT | 时间戳 |
 
-## 4. 配置数据权限（建议）
+## 4. 开通云存储（阅读记录图片）
+
+本项目默认使用 Bucket ID **`reading`**。浏览器里的登录用户不能列出全部 Bucket，所以页面不会靠列表去发现它。
+
+1. CloudBase 控制台 → **云存储** → 新建 Bucket，ID 填 `reading`
+2. 在 SQL 编辑器执行 `cloudbase/migrate-storage-reading.sql`，允许登录用户只读写自己的图片
+3. **安全域名**：本地开发把 `http://localhost:5173`、`http://localhost:5174` 加入 Web 安全域名列表
+4. Bucket ID 不是 `reading` 时，在 `.env.local` 指定后重启 `npm run dev`：
+
+```env
+VITE_CLOUDBASE_STORAGE_BUCKET=你的BucketID
+```
+
+图片保存在 `reading` Bucket 的 `{用户uid}/{日期}/` 路径下。
+
+## 5. 配置数据权限（建议）
 
 在 MySQL 数据表的 **权限设置** 中，确保：
 
@@ -65,7 +80,7 @@ VITE_CLOUDBASE_PUBLISHABLE_KEY=你的PublishableKey
 
 代码里已按 `user_id` 过滤，权限建议双重保障。
 
-## 5. 配置本地环境变量
+## 6. 配置本地环境变量
 
 ```powershell
 Copy-Item .env.example .env.local

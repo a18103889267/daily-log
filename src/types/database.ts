@@ -2,6 +2,8 @@ export type ReadingEntry = {
   title: string
   /** 心得体会，一条一条追加 */
   reflections: string[]
+  /** CloudBase 云存储 fileID */
+  images: string[]
 }
 
 export type DailyChecklist = {
@@ -51,7 +53,7 @@ export function createDefaultChecklist(): DailyChecklist {
     reading: {
       checked: false,
       minutes: 0,
-      entries: [{ title: '', reflections: [''] }],
+      entries: [{ title: '', reflections: [''], images: [] }],
     },
     exercise: {
       checked: false,
@@ -111,8 +113,9 @@ export function normalizeChecklist(checklist: DailyChecklist): DailyChecklist {
         .map((entry) => ({
           title: entry.title.trim(),
           reflections: entry.reflections.map((item) => item.trim()).filter(Boolean),
+          images: (entry.images ?? []).filter((fileId) => fileId && !fileId.startsWith('local:')),
         }))
-        .filter((entry) => entry.title || entry.reflections.length > 0),
+        .filter((entry) => entry.title || entry.reflections.length > 0 || entry.images.length > 0),
     },
     exercise: {
       checked: checklist.exercise.checked,
@@ -130,26 +133,29 @@ function parseReadingEntries(
 
   const legacyNotes = typeof reading?.notes === 'string' ? reading.notes.trim() : ''
   if (legacyNotes) {
-    return [{ title: '', reflections: splitLegacyNotes(legacyNotes) }]
+    return [{ title: '', reflections: splitLegacyNotes(legacyNotes), images: [] }]
   }
 
-  return [{ title: '', reflections: [''] }]
+  return [{ title: '', reflections: [''], images: [] }]
 }
 
 function normalizeReadingEntry(entry: Record<string, unknown>): ReadingEntry {
   const title = String(entry.title ?? '')
+  const images = Array.isArray(entry.images)
+    ? entry.images.map((item) => String(item ?? '').trim()).filter(Boolean)
+    : []
 
   if (Array.isArray(entry.reflections)) {
     const reflections = entry.reflections.map((item) => String(item ?? '').trim())
-    return { title, reflections: reflections.length ? reflections : [''] }
+    return { title, reflections: reflections.length ? reflections : [''], images }
   }
 
   const legacyNotes = typeof entry.notes === 'string' ? entry.notes.trim() : ''
   if (legacyNotes) {
-    return { title, reflections: splitLegacyNotes(legacyNotes) }
+    return { title, reflections: splitLegacyNotes(legacyNotes), images }
   }
 
-  return { title, reflections: [''] }
+  return { title, reflections: [''], images }
 }
 
 function splitLegacyNotes(notes: string): string[] {

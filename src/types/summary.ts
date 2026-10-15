@@ -17,7 +17,7 @@ export type SummaryStats = {
   readingMinutes: number
   exerciseMinutes: number
   technologies: string[]
-  readingNotes: Array<{ date: string; title: string; reflections: string[] }>
+  readingNotes: Array<{ date: string; title: string; reflections: string[]; imageCount: number }>
   completedGoals: string[]
   incompleteGoals: string[]
   overdueGoals: string[]
@@ -38,7 +38,7 @@ export function buildSummaryStats(
   today: string,
 ): SummaryStats {
   const technologies = new Set<string>()
-  const readingNotes: Array<{ date: string; title: string; reflections: string[] }> = []
+  const readingNotes: Array<{ date: string; title: string; reflections: string[]; imageCount: number }> = []
   let learningDays = 0
   let readingDays = 0
   let exerciseDays = 0
@@ -60,8 +60,9 @@ export function buildSummaryStats(
       checklist.reading.entries.forEach((entry) => {
         const title = entry.title.trim()
         const reflections = entry.reflections.map((item) => item.trim()).filter(Boolean)
-        if (title || reflections.length > 0) {
-          readingNotes.push({ date: log.log_date, title, reflections })
+        const imageCount = entry.images?.length ?? 0
+        if (title || reflections.length > 0 || imageCount > 0) {
+          readingNotes.push({ date: log.log_date, title, reflections, imageCount })
         }
       })
     }
@@ -157,11 +158,12 @@ export function buildFallbackSummary(stats: SummaryStats) {
     sections.push('', '## 阅读笔记摘录', '')
     stats.readingNotes.forEach((item) => {
       const label = item.title ? `**${item.date} · ${item.title}**` : `**${item.date}**`
+      const imageHint = item.imageCount > 0 ? `（含 ${item.imageCount} 张图片）` : ''
       if (item.reflections.length === 0) {
-        sections.push(`- ${label}：（无心得）`)
+        sections.push(`- ${label}${imageHint}：（无心得）`)
         return
       }
-      sections.push(`- ${label}`)
+      sections.push(`- ${label}${imageHint}`)
       item.reflections.forEach((reflection) => {
         sections.push(`  - ${reflection}`)
       })

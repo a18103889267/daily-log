@@ -1,4 +1,7 @@
 import cloudbase from '@cloudbase/js-sdk'
+import { registerStorage } from '@cloudbase/js-sdk/storage'
+
+registerStorage(cloudbase)
 
 const envId = import.meta.env.VITE_CLOUDBASE_ENV_ID?.trim()
 const accessKey = import.meta.env.VITE_CLOUDBASE_PUBLISHABLE_KEY?.trim()

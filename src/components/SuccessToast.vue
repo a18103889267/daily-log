@@ -42,18 +42,19 @@ withDefaults(
 <style scoped>
 .success-toast {
   position: fixed;
-  left: 50%;
-  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  inset: 0;
   z-index: 1000;
-  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  padding: 24px;
   pointer-events: none;
-  width: min(420px, calc(100vw - 32px));
 }
 
 .success-toast__card {
   display: flex;
   align-items: center;
   gap: 14px;
+  width: min(420px, calc(100vw - 48px));
   padding: 14px 18px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.96);
@@ -101,22 +102,22 @@ withDefaults(
   line-height: 1.4;
 }
 
-.success-toast-enter-active,
-.success-toast-leave-active {
+.success-toast-enter-active .success-toast__card,
+.success-toast-leave-active .success-toast__card {
   transition:
     opacity 0.28s ease,
     transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.success-toast-enter-from,
-.success-toast-leave-to {
+.success-toast-enter-from .success-toast__card,
+.success-toast-leave-to .success-toast__card {
   opacity: 0;
-  transform: translateX(-50%) translateY(18px) scale(0.98);
+  transform: translateY(12px) scale(0.98);
 }
 
-.success-toast-enter-to,
-.success-toast-leave-from {
+.success-toast-enter-to .success-toast__card,
+.success-toast-leave-from .success-toast__card {
   opacity: 1;
-  transform: translateX(-50%) translateY(0) scale(1);
+  transform: translateY(0) scale(1);
 }
 </style>
