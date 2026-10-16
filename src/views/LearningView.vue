@@ -773,15 +773,50 @@ textarea {
 }
 
 @media (max-width: 768px) {
+  .content {
+    padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
   .toolbar,
   .section-head {
     flex-direction: column;
     align-items: stretch;
   }
 
+  .toolbar h1 {
+    font-size: 22px;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  .section-actions,
   .inline-form,
   .filters {
     grid-template-columns: 1fr;
+  }
+
+  .section-actions {
+    display: grid;
+  }
+
+  .primary,
+  .ghost,
+  .filter-btn,
+  .danger-btn {
+    min-height: 40px;
+  }
+
+  .content-head,
+  .content-meta,
+  .pagination {
+    flex-wrap: wrap;
+  }
+
+  .page-info {
+    width: 100%;
+    text-align: center;
   }
 }
 </style>

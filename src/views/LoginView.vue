@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuth, type EmailOtpSession, type SetPasswordSession, PasswordNotSetError } from '../composables/useAuth'
+import {
+  consumeWechatLoginError,
+  shouldAutoStartWechatLogin,
+  signInWithWechat,
+  useAuth,
+  type EmailOtpSession,
+  type SetPasswordSession,
+  PasswordNotSetError,
+} from '../composables/useAuth'
 import { getCloudBaseErrorMessage } from '../lib/cloudbase'
 
 type LoginMode = 'password' | 'otp'
@@ -11,6 +19,7 @@ type PasswordView = 'login' | 'register' | 'set-password'
 const router = useRouter()
 const route = useRoute()
 const {
+  user,
   sendEmailCode,
   signInWithEmailCode,
   signInWithPassword,
@@ -35,6 +44,7 @@ const setPasswordEmail = ref('')
 const setPasswordValue = ref('')
 
 const loading = ref(false)
+const wechatLoading = ref(false)
 const sendingCode = ref(false)
 const countdown = ref(0)
 const registerCountdown = ref(0)
@@ -93,6 +103,58 @@ function switchLoginMode(mode: LoginMode) {
   loginMode.value = mode
   resetMessages()
 }
+
+function goEmailLogin() {
+  switchLoginMode('password')
+  switchPasswordView('login')
+  passwordLoginType.value = 'email'
+}
+
+function goUsernameLogin() {
+  switchLoginMode('password')
+  switchPasswordView('login')
+  passwordLoginType.value = 'username'
+}
+
+const pageTitle = computed(() => {
+  if (loginMode.value === 'otp') return '验证码登录'
+  if (passwordView.value === 'register') return '注册'
+  if (passwordView.value === 'set-password') return '设置密码'
+  if (passwordLoginType.value === 'username') return '账号登录'
+  return '登录 Daily Log'
+})
+
+const altActions = computed(() => {
+  const onEmailLogin =
+    loginMode.value === 'password' && passwordView.value === 'login' && passwordLoginType.value === 'email'
+  const onUsernameLogin =
+    loginMode.value === 'password' && passwordView.value === 'login' && passwordLoginType.value === 'username'
+  const actions: { label: string; run: () => void }[] = []
+
+  if (!onEmailLogin) actions.push({ label: '邮箱登录', run: goEmailLogin })
+  if (!onUsernameLogin) actions.push({ label: '账号登录', run: goUsernameLogin })
+  if (loginMode.value !== 'otp') actions.push({ label: '验证码登录', run: () => switchLoginMode('otp') })
+  if (!(loginMode.value === 'password' && passwordView.value === 'register')) {
+    actions.push({
+      label: '注册',
+      run: () => {
+        switchLoginMode('password')
+        switchPasswordView('register')
+      },
+    })
+  }
+  if (!(loginMode.value === 'password' && passwordView.value === 'set-password')) {
+    actions.push({
+      label: '设置密码',
+      run: () => {
+        switchLoginMode('password')
+        switchPasswordView('set-password')
+      },
+    })
+  }
+
+  return actions
+})
 
 function switchPasswordView(view: PasswordView) {
   passwordView.value = view
@@ -281,6 +343,30 @@ async function handleOtpSubmit() {
   }
 }
 
+async function handleWechatLogin() {
+  wechatLoading.value = true
+  resetMessages()
+
+  try {
+    await signInWithWechat()
+  } catch (err) {
+    error.value = getCloudBaseErrorMessage(err, '微信登录失败')
+    wechatLoading.value = false
+  }
+}
+
+onMounted(() => {
+  const savedError = consumeWechatLoginError()
+  if (savedError) error.value = savedError
+  if (user.value) {
+    void redirectAfterLogin()
+    return
+  }
+  if (!savedError && shouldAutoStartWechatLogin()) {
+    void handleWechatLogin()
+  }
+})
+
 onUnmounted(() => {
   if (countdownTimer) clearInterval(countdownTimer)
   if (registerCountdownTimer) clearInterval(registerCountdownTimer)
@@ -291,76 +377,16 @@ onUnmounted(() => {
 <template>
   <div class="login-page">
     <div class="card">
-      <h1>登录 Daily Log</h1>
-      <p class="hint">支持密码登录（邮箱或账号），也可使用邮箱验证码登录。电脑和手机可同步同一份记录。</p>
+      <h1>{{ pageTitle }}</h1>
+      <p class="hint">微信里打开可直接授权。也可以用邮箱或账号密码登录，电脑和手机同步同一份记录。</p>
 
-      <div class="mode-tabs">
-        <button
-          type="button"
-          class="mode-tab"
-          :class="{ active: loginMode === 'password' }"
-          @click="switchLoginMode('password')"
-        >
-          密码登录
-        </button>
-        <button
-          type="button"
-          class="mode-tab"
-          :class="{ active: loginMode === 'otp' }"
-          @click="switchLoginMode('otp')"
-        >
-          验证码登录
-        </button>
-      </div>
+      <button class="wechat-btn" type="button" :disabled="loading || wechatLoading" @click="handleWechatLogin">
+        {{ wechatLoading ? '正在打开微信授权…' : '微信登录' }}
+      </button>
+      <p class="divider">或使用邮箱</p>
 
       <template v-if="loginMode === 'password'">
-        <div class="sub-tabs sub-tabs-3">
-          <button
-            type="button"
-            class="sub-tab"
-            :class="{ active: passwordView === 'login' }"
-            @click="switchPasswordView('login')"
-          >
-            登录
-          </button>
-          <button
-            type="button"
-            class="sub-tab"
-            :class="{ active: passwordView === 'set-password' }"
-            @click="switchPasswordView('set-password')"
-          >
-            设置密码
-          </button>
-          <button
-            type="button"
-            class="sub-tab"
-            :class="{ active: passwordView === 'register' }"
-            @click="switchPasswordView('register')"
-          >
-            注册
-          </button>
-        </div>
-
         <div v-if="passwordView === 'login'" class="password-panel">
-          <div class="sub-tabs">
-            <button
-              type="button"
-              class="sub-tab"
-              :class="{ active: passwordLoginType === 'email' }"
-              @click="passwordLoginType = 'email'"
-            >
-              邮箱 + 密码
-            </button>
-            <button
-              type="button"
-              class="sub-tab"
-              :class="{ active: passwordLoginType === 'username' }"
-              @click="passwordLoginType = 'username'"
-            >
-              账号 + 密码
-            </button>
-          </div>
-
           <form @submit.prevent="handlePasswordLogin">
             <label>
               {{ passwordLoginType === 'email' ? '邮箱' : '账号' }}
@@ -536,6 +562,13 @@ onUnmounted(() => {
 
       <p v-if="message" class="message">{{ message }}</p>
       <p v-if="error" class="error">{{ error }}</p>
+
+      <div class="alt-links">
+        <template v-for="(action, index) in altActions" :key="action.label">
+          <span v-if="index > 0" class="dot">·</span>
+          <button type="button" @click="action.run">{{ action.label }}</button>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -572,38 +605,28 @@ h1 {
   font-size: 14px;
 }
 
-.mode-tabs,
-.sub-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.sub-tabs-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.mode-tab,
-.sub-tab {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 10px;
-  background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  cursor: pointer;
+.wechat-btn {
+  width: 100%;
   min-height: 44px;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+  border: none;
+  border-radius: 10px;
+  background: #07c160;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.mode-tab.active,
-.sub-tab.active {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: var(--primary-soft);
-  font-weight: 600;
+.wechat-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.divider {
+  margin: 16px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
 }
 
 .password-panel {
@@ -676,6 +699,25 @@ button[type='submit']:disabled {
   cursor: not-allowed;
 }
 
+@media (max-width: 768px) {
+  .login-page {
+    align-items: start;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .card {
+    padding: 20px 16px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .code-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .message {
   margin-top: 16px;
   color: #059669;
@@ -686,5 +728,30 @@ button[type='submit']:disabled {
   margin-top: 16px;
   color: #dc2626;
   font-size: 14px;
+}
+
+.alt-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 0;
+  margin-top: 18px;
+}
+
+.alt-links button {
+  border: none;
+  background: none;
+  padding: 2px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.alt-links .dot {
+  margin: 0 8px;
+  color: var(--border);
+  font-size: 13px;
 }
 </style>

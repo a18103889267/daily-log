@@ -35,14 +35,126 @@ type LoginState = {
 const loginState = ref<LoginState | null>(null)
 const loading = ref(true)
 
+function firstText(...values: unknown[]) {
+  return values.find((value): value is string => typeof value === 'string' && value.trim().length > 0)
+}
+
 function mapUser(user: Record<string, unknown> | undefined | null): CloudBaseUser | null {
   if (!user) return null
   const uid = String(user.uid ?? user.id ?? user.customUserId ?? '')
   if (!uid) return null
+  const metadata =
+    user.user_metadata && typeof user.user_metadata === 'object'
+      ? (user.user_metadata as Record<string, unknown>)
+      : undefined
   return {
     uid,
-    email: (user.email as string | undefined) ?? undefined,
-    nickName: (user.displayName as string | undefined) ?? (user.name as string | undefined),
+    email: firstText(user.email),
+    nickName: firstText(user.displayName, user.name, user.nickName, metadata?.nickName, metadata?.nickname),
+  }
+}
+
+const WECHAT_LOGIN_ERROR_KEY = 'daily-log-wechat-login-error'
+const WECHAT_ATTEMPT_KEY = 'daily-log-wechat-attempt'
+
+type OAuthClient = {
+  signInWithOAuth: (params: {
+    provider: string
+    options?: { redirectTo?: string }
+  }) => Promise<{ error?: { message?: string } | null }>
+  verifyOAuth: () => Promise<{
+    error?: { message?: string } | null
+  }>
+}
+
+function oauthClient() {
+  return auth as unknown as OAuthClient
+}
+
+export function isWechatBrowser() {
+  return /MicroMessenger/i.test(navigator.userAgent)
+}
+
+function wechatLoginMessage(error: unknown, fallback: string) {
+  const message =
+    typeof error === 'string' && error.trim() ? error : getCloudBaseErrorMessage(error, fallback)
+  if (/not enabled|未开启|未启用|未配置|不支持|disabled|provider.+not/i.test(message)) {
+    return '微信登录还没开通。请在 CloudBase 控制台打开「身份认证 → 登录方式 → 微信」，填入已认证服务号的 AppID 和 AppSecret。'
+  }
+  return message
+}
+
+export function consumeWechatLoginError() {
+  const message = sessionStorage.getItem(WECHAT_LOGIN_ERROR_KEY)
+  if (message) sessionStorage.removeItem(WECHAT_LOGIN_ERROR_KEY)
+  return message || ''
+}
+
+export function shouldAutoStartWechatLogin() {
+  return isWechatBrowser() && sessionStorage.getItem(WECHAT_ATTEMPT_KEY) !== '1'
+}
+
+export async function signInWithWechat() {
+  sessionStorage.setItem(WECHAT_ATTEMPT_KEY, '1')
+  const redirectTo = `${location.origin}${location.pathname}${location.search}${location.hash}`
+  const { error } = await oauthClient().signInWithOAuth({
+    provider: 'wechat',
+    options: { redirectTo },
+  })
+
+  if (error) {
+    throw new Error(wechatLoginMessage(error, '微信登录失败'))
+  }
+}
+
+function savedOAuthHash(state: string) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(state) || 'null') as { hash?: string } | null
+    return saved?.hash || ''
+  } catch {
+    return ''
+  }
+}
+
+function clearOAuthQuery() {
+  const url = new URL(location.href)
+  url.searchParams.delete('code')
+  url.searchParams.delete('state')
+  url.searchParams.delete('provider')
+  url.searchParams.delete('error')
+  url.searchParams.delete('error_description')
+  history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+}
+
+export async function completeWechatRedirect() {
+  const params = new URLSearchParams(location.search)
+  const code = params.get('code')
+  const state = params.get('state')
+  const oauthError = params.get('error_description') || params.get('error')
+
+  if (!code || !state) {
+    if (oauthError) {
+      sessionStorage.setItem(WECHAT_LOGIN_ERROR_KEY, wechatLoginMessage(oauthError, '微信登录失败'))
+      clearOAuthQuery()
+    }
+    return
+  }
+
+  const savedHash = savedOAuthHash(state)
+  if (savedHash && location.hash !== savedHash) return
+
+  try {
+    const { error } = await oauthClient().verifyOAuth()
+    if (error) {
+      sessionStorage.setItem(WECHAT_LOGIN_ERROR_KEY, wechatLoginMessage(error, '微信登录失败'))
+    } else {
+      sessionStorage.removeItem(WECHAT_ATTEMPT_KEY)
+      await refreshLoginState()
+    }
+  } catch (error) {
+    sessionStorage.setItem(WECHAT_LOGIN_ERROR_KEY, wechatLoginMessage(error, '微信登录失败'))
+  } finally {
+    clearOAuthQuery()
   }
 }
 

@@ -450,13 +450,37 @@ select {
 }
 
 @media (max-width: 768px) {
+  .content {
+    padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
   .toolbar {
     flex-direction: column;
+  }
+
+  .toolbar h1 {
+    font-size: 22px;
+  }
+
+  .panel {
+    padding: 12px;
   }
 
   .panel-head {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .filter-btn,
+  .primary,
+  .ghost {
+    min-height: 40px;
+  }
+
+  .goal-meta,
+  .delete-btn {
+    padding-left: 0;
+    margin-left: 0;
   }
 }
 </style>

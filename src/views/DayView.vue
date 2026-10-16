@@ -810,9 +810,69 @@ textarea {
 }
 
 @media (max-width: 768px) {
+  .content {
+    padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .toolbar h1 {
+    font-size: 22px;
+  }
+
+  .editor {
+    gap: 16px;
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .check-item {
+    padding: 12px;
+  }
+
+  .check-row {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
   .detail-row,
   .reflection-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .detail-row input,
+  .reflection-row input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .image-card,
+  .image-add {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .actions {
+    align-items: stretch;
+  }
+
+  .actions .primary {
+    min-height: 44px;
+  }
+
+  .lightbox-close {
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    right: calc(12px + env(safe-area-inset-right, 0px));
   }
 }
 </style>

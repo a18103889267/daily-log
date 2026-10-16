@@ -364,8 +364,12 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .page {
+    height: 100svh;
+  }
+
   .content {
-    padding: 8px 10px 10px;
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px));
     gap: 8px;
   }
 
@@ -381,6 +385,10 @@ onMounted(() => {
     display: none;
   }
 
+  .primary {
+    min-height: 40px;
+  }
+
   .calendar-card {
     padding: 10px;
     border-radius: 12px;
@@ -388,6 +396,11 @@ onMounted(() => {
 
   .calendar-toolbar h2 {
     font-size: 15px;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
   }
 
   .weekdays {
@@ -399,6 +412,7 @@ onMounted(() => {
   }
 
   .day-cell {
+    min-height: 36px;
     border-radius: 6px;
   }
 }

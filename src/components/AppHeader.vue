@@ -57,7 +57,7 @@ function isActive(name: string) {
       </button>
     </nav>
     <div class="actions">
-      <span v-if="user" class="email">{{ user.email }}</span>
+      <span v-if="user" class="email">{{ user.nickName || user.email }}</span>
       <button type="button" class="ghost" @click="handleSignOut">退出</button>
     </div>
   </header>
@@ -141,9 +141,50 @@ function isActive(name: string) {
 }
 
 @media (max-width: 768px) {
+  .app-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'brand actions'
+      'nav nav';
+    align-items: center;
+    gap: 8px;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 8px;
+  }
+
+  .brand {
+    grid-area: brand;
+  }
+
+  .actions {
+    grid-area: actions;
+  }
+
+  .nav {
+    grid-area: nav;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .nav-link {
+    min-height: 40px;
+    padding: 8px 4px;
+    text-align: center;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
   .subtitle,
   .email {
     display: none;
+  }
+
+  .ghost {
+    min-height: 40px;
+    padding: 8px 12px;
   }
 }
 </style>
